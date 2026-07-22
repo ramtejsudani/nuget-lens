@@ -1,71 +1,39 @@
-# nuget-version-lens README
+# NuGet Version Lens
 
-This is the README for your extension "nuget-version-lens". After writing up a brief description, we recommend including the following sections.
+Scans `Directory.Packages.props`, `.csproj`, and `packages.config` files for NuGet package references, checks each package against the feeds configured in `nuget.config`, and surfaces upgrade, deprecation, and vulnerability information directly in the editor.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Automatic scanning** — opening or switching to a supported project file logs its packages and their upgrade/deprecation/vulnerability status to the "NuGet Version Lens" output channel.
+- **CodeLens upgrades** — an "⬆ Upgrade" CodeLens appears above any package with a newer version available. Clicking it opens a picker listing every available version (flagging deprecated/vulnerable ones), and applies the edit directly to the file.
+- **Deprecation warnings** — packages marked deprecated on the feed show a "⚠ Deprecated" CodeLens with the reason and any suggested replacement package.
+- **Vulnerability warnings** — packages with known security advisories show a "🛡 Vulnerable" CodeLens with severity and advisory links. nuget.org's public vulnerability database is checked automatically as a supplement when your configured feed(s) don't publish this data (e.g. private/internal feeds, Azure Artifacts).
+- **Azure Artifacts support** — feeds hosted on Azure Artifacts are detected automatically; you'll be prompted once for a Personal Access Token, which is stored securely in VS Code's SecretStorage (OS keychain), never on disk.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+No external tooling is required. Azure Artifacts feeds need a Personal Access Token with **Packaging (Read)** scope, which the extension will prompt for on first use.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+* `nugetUpgrade.cacheTTL`: How long, in seconds, to cache NuGet version/deprecation/vulnerability lookups before refetching. Default: `3600` (1 hour). Set to `0` to disable caching.
+* `nugetUpgrade.includePrerelease`: Include prerelease versions when computing upgrade recommendations. Default: `false`.
+* `nugetUpgrade.feedUrl`: Override the NuGet feed (service index URL) to check for upgrades, bypassing `nuget.config` resolution. Leave empty to resolve sources from `nuget.config` as usual.
+
+## Commands
+
+* `NuGet Lens: View Packages in Current File` — manually scan the active file and print results to the output channel.
+* `NuGet Lens: Set Feed Credentials (Azure Artifacts PAT)` — update or replace the stored PAT for an Azure Artifacts feed.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+* `.csproj` files using Central Package Management (no `Version` attribute on `PackageReference`) are not checked directly — see the version in the corresponding `Directory.Packages.props` instead.
+* Deprecation and vulnerability data availability depends on what your configured NuGet feed(s) publish; most feeds other than nuget.org don't implement NuGet's `VulnerabilityInfo` resource.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Initial release: multi-format package scanning, CodeLens upgrades, deprecation/vulnerability warnings, Azure Artifacts PAT support, and configurable caching/prerelease/feed-override settings.

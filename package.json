@@ -9,15 +9,46 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["onLanguage:xml"],
+  "activationEvents": [
+    "onLanguage:xml",
+    "workspaceContains:**/Directory.Packages.props",
+    "workspaceContains:**/*.csproj",
+    "workspaceContains:**/packages.config"
+  ],
   "main": "./out/extension.js",
+  "icon": "images/icon.png",
   "contributes": {
     "commands": [
       {
         "command": "nuget-version-lens.viewPackagesInCurrentFile",
         "title": "NuGet Lens: View Packages in Current File"
+      },
+      {
+        "command": "nuget-version-lens.setFeedCredentials",
+        "title": "NuGet Lens: Set Feed Credentials (Azure Artifacts PAT)"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "NuGet Version Lens",
+      "properties": {
+        "nugetUpgrade.cacheTTL": {
+          "type": "number",
+          "default": 3600,
+          "minimum": 0,
+          "description": "How long, in seconds, to cache NuGet version/deprecation/vulnerability lookups before refetching. Set to 0 to disable caching."
+        },
+        "nugetUpgrade.includePrerelease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include prerelease versions when computing upgrade recommendations."
+        },
+        "nugetUpgrade.feedUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Override the NuGet feed (service index URL) to check for upgrades, bypassing nuget.config resolution. Leave empty to resolve sources from nuget.config as usual."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -30,14 +61,16 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/vscode": "^1.120.0",
+    "@types/vscode": "^1.106.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1"
   },
   "dependencies": {
+    "axios": "^1.18.1",
     "fast-xml-parser": "^5.8.0"
   }
 }

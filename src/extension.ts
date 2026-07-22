@@ -1,8 +1,13 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { DirectoryPackagesParser } from './parsers/DirectoryPackagesParser';
 import { PackageScanner } from './Services/packagescanner';
+import { CredentialService } from './Services/CredentialService';
+import { NuGetClient } from './Services/NuGetClient';
+import { UpgradeService, outputPackageSummary } from './Services/UpgradeService';
+import { NuGetConfigParser } from './parsers/NuGetConfigParser';
+import { PackageCodeLensProvider, UPGRADE_COMMAND, SHOW_WARNING_COMMAND, WarningCommandArgs } from './providers/PackageCodeLensProvider';
+import { upgradePackageCommand } from './commands/upgradePackage';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -18,14 +23,32 @@ export async function activate(context: vscode.ExtensionContext) {
     statusBarItem.tooltip = 'NuGet Version Lens';
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
-	outputChannel.show(true);
-    outputChannel.appendLine('[NuGet Version Lens] Extension activated at ' + new Date().toLocaleTimeString());
+	outputChannel.appendLine('[NuGet Version Lens] Extension activated at ' + new Date().toLocaleTimeString());
 
-	
- 	const scanner = new PackageScanner();
- 	
+	const scanner = new PackageScanner();
+	const credentialService = new CredentialService(context.secrets);
+	const nugetClient = new NuGetClient(credentialService, outputChannel);
+	const upgradeService = new UpgradeService(nugetClient, outputChannel);
+	const configParser = new NuGetConfigParser();
+	const codeLensProvider = new PackageCodeLensProvider(scanner, upgradeService);
 
-	    const viewCurrentFileCommand =
+	async function logPackagesAndUpgrades(document: vscode.TextDocument): Promise<void> {
+		if (!PackageScanner.isSupportedFile(document.fileName)) {
+			return;
+		}
+
+		const packages = scanner.getPackagesFromDocument(document);
+		if (packages.length === 0) {
+			outputChannel.appendLine(`[NuGet Version Lens] No package references found in ${document.fileName}`);
+			return;
+		}
+
+		outputChannel.appendLine(`[NuGet Version Lens] Found ${packages.length} package(s) in ${document.fileName}`);
+		const infos = await upgradeService.checkPackages(document.uri.fsPath, packages);
+		outputPackageSummary(outputChannel, packages, infos);
+	}
+
+	const viewCurrentFileCommand =
         vscode.commands.registerCommand(
             'nuget-version-lens.viewPackagesInCurrentFile',
             async () => {
@@ -36,39 +59,90 @@ export async function activate(context: vscode.ExtensionContext) {
                     );
                     return;
                 }
-				console.log(`Found ${packages.length} packages in the active document`);
-				outputChannel.appendLine(`[NuGet Version Lens] Found ${packages.length} packages in the active document`);
-				outputChannel.appendLine(`[NuGet Version Lens] Packages: ${packages.map(p => p.packageId + ' ' + p.version).join(', ')}`);
-                vscode.window.showQuickPick(
-                    packages.map(pkg => ({
-                        label: pkg.packageId,
-                        description: pkg.version
-                    })),
-                    { placeHolder: 'Packages in the active file' }
-                );
+				outputChannel.show(true);
+				const activeDocument = vscode.window.activeTextEditor!.document;
+				await logPackagesAndUpgrades(activeDocument);
             }
         );
 
-	context.subscriptions.push(viewCurrentFileCommand);
+	const upgradeCommand = vscode.commands.registerCommand(UPGRADE_COMMAND, async (args) => {
+		await upgradePackageCommand(args);
+		codeLensProvider.refresh();
+	});
 
-	async function refreshPackages() {
-    const packages = await scanner.getPackages();
+	const showWarningCommand = vscode.commands.registerCommand(
+		SHOW_WARNING_COMMAND,
+		async (args: WarningCommandArgs) => {
+			await vscode.window.showWarningMessage(`${args.packageId}: ${args.message}`);
+		}
+	);
 
-    outputChannel.appendLine(
-        `Found ${packages?.length ?? 0} packages`
-    );
+	const setCredentialsCommand = vscode.commands.registerCommand(
+		'nuget-version-lens.setFeedCredentials',
+		async () => {
+			const activeDocument = vscode.window.activeTextEditor?.document;
+			if (!activeDocument || !PackageScanner.isSupportedFile(activeDocument.fileName)) {
+				vscode.window.showInformationMessage('Open a Directory.Packages.props, .csproj, or packages.config file first to set feed credentials.');
+				return;
+			}
 
-    // Update CodeLens / Decorations / TreeView here
-}
-	// Auto-log when an XML document is opened
-    const onOpenDocument = vscode.workspace.onDidOpenTextDocument((document) => {
-		        outputChannel.appendLine(`language=${document.languageId}, file=${document.fileName}`);
-        if (document.fileName.match(/\.(csproj|props|config)$/i)) {
-			refreshPackages();
-            outputChannel.appendLine(`[NuGet Version Lens] Opened: ${document.fileName.split(/[\\/]/).pop()}`);
-        }
-    });
-    context.subscriptions.push(onOpenDocument);
+			const sources = configParser.resolveSources(activeDocument.uri.fsPath).filter(s => s.isAzureArtifacts);
+			if (sources.length === 0) {
+				vscode.window.showInformationMessage('No Azure Artifacts feeds were found in nuget.config for this file.');
+				return;
+			}
+
+			const picked = sources.length === 1
+				? sources[0]
+				: await vscode.window.showQuickPick(sources.map(s => ({ label: s.name, description: s.url, source: s })))
+					.then(choice => choice?.source);
+
+			if (!picked) {
+				return;
+			}
+
+			await credentialService.forgetPatForSource(picked.url);
+			const pat = await credentialService.getPatForSource(picked.url);
+			if (pat) {
+				vscode.window.showInformationMessage(`NuGet Version Lens: credentials updated for ${picked.name}.`);
+				codeLensProvider.refresh();
+			}
+		}
+	);
+
+	const codeLensRegistration = vscode.languages.registerCodeLensProvider(
+		[
+			{ language: 'xml' },
+			{ pattern: '**/*.csproj' },
+			{ pattern: '**/packages.config' }
+		],
+		codeLensProvider
+	);
+
+	const openListener = vscode.workspace.onDidOpenTextDocument(document => {
+		void logPackagesAndUpgrades(document);
+	});
+
+	const activeEditorListener = vscode.window.onDidChangeActiveTextEditor(editor => {
+		if (editor) {
+			void logPackagesAndUpgrades(editor.document);
+		}
+	});
+
+	if (vscode.window.activeTextEditor) {
+		void logPackagesAndUpgrades(vscode.window.activeTextEditor.document);
+	}
+
+	context.subscriptions.push(
+		viewCurrentFileCommand,
+		upgradeCommand,
+		showWarningCommand,
+		setCredentialsCommand,
+		codeLensRegistration,
+		openListener,
+		activeEditorListener,
+		outputChannel
+	);
 }
 
 // This method is called when your extension is deactivated

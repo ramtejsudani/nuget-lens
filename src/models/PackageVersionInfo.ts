@@ -1,4 +1,6 @@
 import { UpgradeRecommendation } from './UpgradeRecommendation';
+import { VulnerabilityInfo } from './VulnerabilityInfo';
+import { VersionFlags } from './VersionFlags';
 
 export interface PackageVersionInfo {
     packageId: string;
@@ -6,5 +8,8 @@ export interface PackageVersionInfo {
     versions: string[];
     isDeprecated: boolean;
     deprecationMessage?: string;
+    isVulnerable: boolean;
+    vulnerabilities: VulnerabilityInfo[];
+    versionFlags: Map<string, VersionFlags>;
     upgradeRecommendation?: UpgradeRecommendation;
 }

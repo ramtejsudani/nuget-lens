@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { PackageReference } from "../models/PackageReference";
+import { assignLineNumbersByTag } from "../utils/xmlLineNumbers";
 
 
 export class DirectoryPackagesParser {
@@ -47,8 +48,9 @@ export class DirectoryPackagesParser {
             }
     }
 
+    assignLineNumbersByTag(xmlContent, /<PackageVersion\b[^>]*>/g, packages);
+
     return packages;
 
 }
 }
-
