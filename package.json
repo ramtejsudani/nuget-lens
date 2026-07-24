@@ -2,7 +2,7 @@
   "name": "nuget-version-lens",
   "displayName": "Nuget-version-lens",
   "description": "Extension to upgrade nuget packages from directory.packages.props, csproj or packages.config. ",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.106.0"
   },
