@@ -24,13 +24,8 @@ chore: bump eslint to 9.40
 docs: update README with usage instructions
 ```
 
-This drives automatic versioning via semantic-release.
-
 ## Versioning
 
-Versions are managed automatically by `semantic-release` in CI:
-- `fix:` commits → patch bump (0.0.x)
-- `feat:` commits → minor bump (0.x.0)
-- `BREAKING CHANGE:` in commit body → major bump (x.0.0)
+The version in `package.json` is bumped automatically (`npm version patch`) by the release workflow when changes land on `master` — see `.github/workflows/release.yml`.
 
 **Do not manually edit the version in `package.json`.**
