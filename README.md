@@ -6,9 +6,26 @@ Scans `Directory.Packages.props`, `.csproj`, and `packages.config` files for NuG
 
 - **Automatic scanning** — opening or switching to a supported project file logs its packages and their upgrade/deprecation/vulnerability status to the "NuGet Version Lens" output channel.
 - **CodeLens upgrades** — an "⬆ Upgrade" CodeLens appears above any package with a newer version available. Clicking it opens a picker listing every available version (flagging deprecated/vulnerable ones), and applies the edit directly to the file.
+
+  ![Upgrade CodeLens in a .csproj file](images/csproj-codelens.png)
+
 - **Deprecation warnings** — packages marked deprecated on the feed show a "⚠ Deprecated" CodeLens with the reason and any suggested replacement package.
 - **Vulnerability warnings** — packages with known security advisories show a "🛡 Vulnerable" CodeLens with severity and advisory links. nuget.org's public vulnerability database is checked automatically as a supplement when your configured feed(s) don't publish this data (e.g. private/internal feeds, Azure Artifacts).
+
+  ![Combined vulnerability and upgrade CodeLens](images/vulnerability-codelens.png)
+
+  Selecting the CodeLens opens a version picker that flags deprecated or vulnerable versions inline:
+
+  ![Version picker showing a recommended upgrade](images/upgrade-picker.png)
+  ![Version picker flagging vulnerable versions](images/upgrade-picker-vulnerable.png)
+
+  Applying an upgrade edits the file directly:
+
+  ![Directory.Packages.props after applying upgrades](images/directory-packages-props-upgraded.png)
+
 - **Azure Artifacts support** — feeds hosted on Azure Artifacts are detected automatically; you'll be prompted once for a Personal Access Token, which is stored securely in VS Code's SecretStorage (OS keychain), never on disk.
+
+  ![Azure Artifacts PAT prompt](images/azure-pat-prompt.png)
 
 ## Requirements
 
@@ -34,6 +51,6 @@ This extension contributes the following settings:
 
 ## Release Notes
 
-### 0.0.1
+### 1.0.1
 
 Initial release: multi-format package scanning, CodeLens upgrades, deprecation/vulnerability warnings, Azure Artifacts PAT support, and configurable caching/prerelease/feed-override settings.

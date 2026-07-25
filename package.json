@@ -1,11 +1,15 @@
 {
   "name": "nuget-version-lens",
-  "displayName": "Nuget-version-lens",
+  "displayName": "Nuget Version Lens",
   "description": "Extension to upgrade nuget packages from directory.packages.props, csproj or packages.config. ",
   "version": "1.0.0",
   "publisher": "RamtejDevLabs",
   "author": {
     "name": "Ramtej Sudani"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ramtejsudani/nuget-version-lens.git"
   },
   "engines": {
     "vscode": "^1.106.0"
