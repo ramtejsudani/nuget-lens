@@ -11,6 +11,7 @@
     "type": "git",
     "url": "https://github.com/ramtejsudani/nuget-lens.git"
   },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.106.0"
   },
@@ -23,7 +24,7 @@
     "workspaceContains:**/*.csproj",
     "workspaceContains:**/packages.config"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "icon": "images/icon.png",
   "contributes": {
     "commands": [
@@ -59,10 +60,12 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
+    "compile-tests": "tsc -p ./",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
   },
