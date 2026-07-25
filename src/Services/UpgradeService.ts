@@ -45,7 +45,7 @@ export class UpgradeService {
             if (this.lastLoggedFeedUrlOverride !== feedUrlOverride) {
                 this.lastLoggedFeedUrlOverride = feedUrlOverride;
                 this.outputChannel.appendLine(
-                    `[NuGet Version Lens] nugetUpgrade.feedUrl is set — using "${feedUrlOverride}" instead of nuget.config for all lookups. ` +
+                    `[NuGet Lens] nugetUpgrade.feedUrl is set — using "${feedUrlOverride}" instead of nuget.config for all lookups. ` +
                     `Clear this setting to go back to normal nuget.config resolution (with a nuget.org fallback when no nuget.config is found).`
                 );
             }
@@ -168,9 +168,9 @@ export function outputPackageSummary(outputChannel: vscode.OutputChannel, packag
     for (const pkg of packages) {
         const info = infos.get(pkg.packageId.toLowerCase());
         if (info) {
-            outputChannel.appendLine(`[NuGet Version Lens]   ${formatUpgradeSummary(pkg.packageId, info)}`);
+            outputChannel.appendLine(`[NuGet Lens]   ${formatUpgradeSummary(pkg.packageId, info)}`);
         } else {
-            outputChannel.appendLine(`[NuGet Version Lens]   ${pkg.packageId} ${pkg.version} (unable to determine latest version)`);
+            outputChannel.appendLine(`[NuGet Lens]   ${pkg.packageId} ${pkg.version} (unable to determine latest version)`);
         }
     }
 }

@@ -57,14 +57,14 @@ export async function upgradePackageCommand(args: UpgradeCommandArgs): Promise<v
     const document = await vscode.workspace.openTextDocument(uri);
 
     if (args.lineNumber >= document.lineCount) {
-        vscode.window.showWarningMessage(`NuGet Version Lens: line ${args.lineNumber + 1} no longer exists in ${document.fileName}.`);
+        vscode.window.showWarningMessage(`NuGet Lens: line ${args.lineNumber + 1} no longer exists in ${document.fileName}.`);
         return;
     }
 
     const line = document.lineAt(args.lineNumber);
     const match = VERSION_ATTR_REGEX.exec(line.text);
     if (!match) {
-        vscode.window.showWarningMessage(`NuGet Version Lens: could not locate the Version attribute for ${args.packageId} on line ${args.lineNumber + 1}.`);
+        vscode.window.showWarningMessage(`NuGet Lens: could not locate the Version attribute for ${args.packageId} on line ${args.lineNumber + 1}.`);
         return;
     }
 
@@ -76,6 +76,6 @@ export async function upgradePackageCommand(args: UpgradeCommandArgs): Promise<v
 
     const applied = await vscode.workspace.applyEdit(edit);
     if (applied) {
-        vscode.window.showInformationMessage(`NuGet Version Lens: upgraded ${args.packageId} to ${newVersion}.`);
+        vscode.window.showInformationMessage(`NuGet Lens: upgraded ${args.packageId} to ${newVersion}.`);
     }
 }

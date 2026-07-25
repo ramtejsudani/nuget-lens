@@ -1,10 +1,10 @@
-# NuGet Version Lens
+# NuGet Lens
 
 Scans `Directory.Packages.props`, `.csproj`, and `packages.config` files for NuGet package references, checks each package against the feeds configured in `nuget.config`, and surfaces upgrade, deprecation, and vulnerability information directly in the editor.
 
 ## Features
 
-- **Automatic scanning** — opening or switching to a supported project file logs its packages and their upgrade/deprecation/vulnerability status to the "NuGet Version Lens" output channel.
+- **Automatic scanning** — opening or switching to a supported project file logs its packages and their upgrade/deprecation/vulnerability status to the "NuGet Lens" output channel.
 - **CodeLens upgrades** — an "⬆ Upgrade" CodeLens appears above any package with a newer version available. Clicking it opens a picker listing every available version (flagging deprecated/vulnerable ones), and applies the edit directly to the file.
 
   ![Upgrade CodeLens in a .csproj file](images/csproj-codelens.png)

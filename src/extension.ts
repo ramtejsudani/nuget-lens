@@ -16,14 +16,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('NuGet Lens activated');
-	const outputChannel = vscode.window.createOutputChannel('NuGet Version Lens');
+	const outputChannel = vscode.window.createOutputChannel('NuGet Lens');
 	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.text = 'NuGet Lens';
     statusBarItem.color = new vscode.ThemeColor('charts.green');
-    statusBarItem.tooltip = 'NuGet Version Lens';
+    statusBarItem.tooltip = 'NuGet Lens';
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
-	outputChannel.appendLine('[NuGet Version Lens] Extension activated at ' + new Date().toLocaleTimeString());
+	outputChannel.appendLine('[NuGet Lens] Extension activated at ' + new Date().toLocaleTimeString());
 
 	const scanner = new PackageScanner();
 	const credentialService = new CredentialService(context.secrets);
@@ -39,18 +39,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const packages = scanner.getPackagesFromDocument(document);
 		if (packages.length === 0) {
-			outputChannel.appendLine(`[NuGet Version Lens] No package references found in ${document.fileName}`);
+			outputChannel.appendLine(`[NuGet Lens] No package references found in ${document.fileName}`);
 			return;
 		}
 
-		outputChannel.appendLine(`[NuGet Version Lens] Found ${packages.length} package(s) in ${document.fileName}`);
+		outputChannel.appendLine(`[NuGet Lens] Found ${packages.length} package(s) in ${document.fileName}`);
 		const infos = await upgradeService.checkPackages(document.uri.fsPath, packages);
 		outputPackageSummary(outputChannel, packages, infos);
 	}
 
 	const viewCurrentFileCommand =
         vscode.commands.registerCommand(
-            'nuget-version-lens.viewPackagesInCurrentFile',
+            'nuget-lens.viewPackagesInCurrentFile',
             async () => {
                const packages = (await scanner.getPackages()) || [];
                 if (packages.length === 0) {
@@ -78,7 +78,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	const setCredentialsCommand = vscode.commands.registerCommand(
-		'nuget-version-lens.setFeedCredentials',
+		'nuget-lens.setFeedCredentials',
 		async () => {
 			const activeDocument = vscode.window.activeTextEditor?.document;
 			if (!activeDocument || !PackageScanner.isSupportedFile(activeDocument.fileName)) {
@@ -104,7 +104,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			await credentialService.forgetPatForSource(picked.url);
 			const pat = await credentialService.getPatForSource(picked.url);
 			if (pat) {
-				vscode.window.showInformationMessage(`NuGet Version Lens: credentials updated for ${picked.name}.`);
+				vscode.window.showInformationMessage(`NuGet Lens: credentials updated for ${picked.name}.`);
 				codeLensProvider.refresh();
 			}
 		}

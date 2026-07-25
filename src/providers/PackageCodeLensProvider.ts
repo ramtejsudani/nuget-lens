@@ -4,8 +4,8 @@ import { UpgradeService } from '../Services/UpgradeService';
 import { VersionFlags } from '../models/VersionFlags';
 import { highestSeverity, vulnerabilitySeverityLabel } from '../models/VulnerabilityInfo';
 
-export const UPGRADE_COMMAND = 'nuget-version-lens.upgradePackage';
-export const SHOW_WARNING_COMMAND = 'nuget-version-lens.showPackageWarning';
+export const UPGRADE_COMMAND = 'nuget-lens.upgradePackage';
+export const SHOW_WARNING_COMMAND = 'nuget-lens.showPackageWarning';
 
 export interface UpgradeCommandArgs {
     uri: string;

@@ -1,6 +1,6 @@
 {
-  "name": "nuget-version-lens",
-  "displayName": "Nuget Version Lens",
+  "name": "nuget-lens",
+  "displayName": "NuGet Lens",
   "description": "Extension to upgrade nuget packages from directory.packages.props, csproj or packages.config. ",
   "version": "1.0.0",
   "publisher": "RamtejDevLabs",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ramtejsudani/nuget-version-lens.git"
+    "url": "https://github.com/ramtejsudani/nuget-lens.git"
   },
   "engines": {
     "vscode": "^1.106.0"
@@ -28,16 +28,16 @@
   "contributes": {
     "commands": [
       {
-        "command": "nuget-version-lens.viewPackagesInCurrentFile",
+        "command": "nuget-lens.viewPackagesInCurrentFile",
         "title": "NuGet Lens: View Packages in Current File"
       },
       {
-        "command": "nuget-version-lens.setFeedCredentials",
+        "command": "nuget-lens.setFeedCredentials",
         "title": "NuGet Lens: Set Feed Credentials (Azure Artifacts PAT)"
       }
     ],
     "configuration": {
-      "title": "NuGet Version Lens",
+      "title": "NuGet Lens",
       "properties": {
         "nugetUpgrade.cacheTTL": {
           "type": "number",

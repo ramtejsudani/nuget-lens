@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-const SECRET_KEY_PREFIX = 'nuget-version-lens.pat.';
+const SECRET_KEY_PREFIX = 'nuget-lens.pat.';
 
 export class CredentialService {
 
@@ -33,7 +33,7 @@ export class CredentialService {
 
     private async promptForPat(sourceUrl: string): Promise<string | undefined> {
         return vscode.window.showInputBox({
-            title: 'NuGet Version Lens: Azure Artifacts Authentication',
+            title: 'NuGet Lens: Azure Artifacts Authentication',
             prompt: `Enter a Personal Access Token (PAT) with Packaging (Read) scope for feed: ${sourceUrl}`,
             password: true,
             ignoreFocusOut: true

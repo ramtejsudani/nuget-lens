@@ -154,7 +154,7 @@ export class NuGetClient {
             }
         } catch (err) {
             this.outputChannel.appendLine(
-                `[NuGet Version Lens] Failed to check deprecation for "${packageId}" against feed "${source.name}": ${(err as Error).message ?? err}`
+                `[NuGet Lens] Failed to check deprecation for "${packageId}" against feed "${source.name}": ${(err as Error).message ?? err}`
             );
         }
         return entries;
@@ -194,7 +194,7 @@ export class NuGetClient {
         if (!resource && !this.loggedMissingRegistration.has(source.url)) {
             this.loggedMissingRegistration.add(source.url);
             this.outputChannel.appendLine(
-                `[NuGet Version Lens] Feed "${source.name}" does not expose a RegistrationsBaseUrl resource — deprecation checks are unavailable from this source.`
+                `[NuGet Lens] Feed "${source.name}" does not expose a RegistrationsBaseUrl resource — deprecation checks are unavailable from this source.`
             );
         }
         return resource?.['@id'];
@@ -205,14 +205,14 @@ export class NuGetClient {
         if (resources.length === 0 && !this.loggedServiceIndexFailure.has(source.url)) {
             this.loggedServiceIndexFailure.add(source.url);
             this.outputChannel.appendLine(
-                `[NuGet Version Lens] Feed "${source.name}" (${source.url}) returned no usable service index — check the URL is a valid NuGet v3 service index and reachable.`
+                `[NuGet Lens] Feed "${source.name}" (${source.url}) returned no usable service index — check the URL is a valid NuGet v3 service index and reachable.`
             );
         }
         const resource = resources.find(r => r['@type']?.startsWith('PackageBaseAddress/3.0.0'));
         if (!resource && resources.length > 0 && !this.loggedMissingPackageBaseAddress.has(source.url)) {
             this.loggedMissingPackageBaseAddress.add(source.url);
             this.outputChannel.appendLine(
-                `[NuGet Version Lens] Feed "${source.name}" does not expose a PackageBaseAddress/3.0.0 resource — version lookups are unavailable from this source.`
+                `[NuGet Lens] Feed "${source.name}" does not expose a PackageBaseAddress/3.0.0 resource — version lookups are unavailable from this source.`
             );
         }
         return resource?.['@id'];
@@ -238,7 +238,7 @@ export class NuGetClient {
                 if (!this.loggedMissingVulnerabilityResource.has(source.url)) {
                     this.loggedMissingVulnerabilityResource.add(source.url);
                     this.outputChannel.appendLine(
-                        `[NuGet Version Lens] Feed "${source.name}" does not expose a VulnerabilityInfo resource — vulnerability checks are unavailable from this source ` +
+                        `[NuGet Lens] Feed "${source.name}" does not expose a VulnerabilityInfo resource — vulnerability checks are unavailable from this source ` +
                         `(this is a nuget.org-specific extension; most other feeds, including Azure Artifacts, don't implement it).`
                     );
                 }
@@ -258,7 +258,7 @@ export class NuGetClient {
             }
         } catch (err) {
             this.outputChannel.appendLine(
-                `[NuGet Version Lens] Failed to load vulnerability data from feed "${source.name}": ${(err as Error).message ?? err}`
+                `[NuGet Lens] Failed to load vulnerability data from feed "${source.name}": ${(err as Error).message ?? err}`
             );
         }
         return map;
@@ -291,12 +291,12 @@ export class NuGetClient {
         if (status === 401 || status === 403) {
             if (source.isAzureArtifacts) {
                 this.outputChannel.appendLine(
-                    `[NuGet Version Lens] Authentication failed for Azure Artifacts feed "${source.name}" while checking ${packageId}. ` +
-                    `The stored PAT may be invalid or expired; use "NuGet Version Lens: Set Feed Credentials" to update it.`
+                    `[NuGet Lens] Authentication failed for Azure Artifacts feed "${source.name}" while checking ${packageId}. ` +
+                    `The stored PAT may be invalid or expired; use "NuGet Lens: Set Feed Credentials" to update it.`
                 );
             } else {
                 this.outputChannel.appendLine(
-                    `[NuGet Version Lens] Feed "${source.name}" requires authentication that isn't supported for non-Azure feeds yet. ` +
+                    `[NuGet Lens] Feed "${source.name}" requires authentication that isn't supported for non-Azure feeds yet. ` +
                     `Configure credentials for it via 'dotnet nuget add source' or a <packageSourceCredentials> entry in nuget.config.`
                 );
             }
@@ -304,7 +304,7 @@ export class NuGetClient {
         }
 
         this.outputChannel.appendLine(
-            `[NuGet Version Lens] Failed to check "${packageId}" against feed "${source.name}": ${(err as Error).message ?? err}`
+            `[NuGet Lens] Failed to check "${packageId}" against feed "${source.name}": ${(err as Error).message ?? err}`
         );
     }
 }
