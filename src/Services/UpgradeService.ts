@@ -25,6 +25,9 @@ export class UpgradeService {
         private readonly outputChannel: vscode.OutputChannel
     ) {}
 
+    // Results are keyed by packageKey (id + version), not id alone: a Directory.Packages.props can
+    // declare the same package more than once under different Conditions (e.g. a stable and a
+    // develop channel), and each line needs its own recommendation.
     public async checkPackages(filePath: string, packages: PackageReference[]): Promise<Map<string, PackageVersionInfo>> {
         const sources = this.resolveSources(filePath);
         const results = new Map<string, PackageVersionInfo>();
@@ -32,7 +35,7 @@ export class UpgradeService {
         await Promise.all(packages.map(async pkg => {
             const info = await this.checkPackage(pkg, sources);
             if (info) {
-                results.set(pkg.packageId.toLowerCase(), info);
+                results.set(packageKey(pkg), info);
             }
         }));
 
@@ -62,19 +65,12 @@ export class UpgradeService {
     }
 
     private async checkPackage(pkg: PackageReference, sources: NuGetSource[]): Promise<PackageVersionInfo | undefined> {
-        let versions: string[] = [];
-        let primarySource: NuGetSource | undefined;
+        // Versions are merged across every source, like NuGet restore does: a package can live on a
+        // stable feed and also have prereleases on an additional dev feed.
+        const perSource = await Promise.all(sources.map(source => this.nugetClient.getVersions(source, pkg.packageId)));
+        const versions = mergeVersionLists(perSource);
 
-        for (const source of sources) {
-            const candidates = await this.nugetClient.getVersions(source, pkg.packageId);
-            if (candidates.length > 0) {
-                versions = candidates;
-                primarySource = source;
-                break;
-            }
-        }
-
-        if (!primarySource) {
+        if (versions.length === 0) {
             return undefined;
         }
 
@@ -123,6 +119,25 @@ export class UpgradeService {
     }
 }
 
+export function packageKey(pkg: { packageId: string; version: string }): string {
+    return `${pkg.packageId.toLowerCase()}@${pkg.version.toLowerCase()}`;
+}
+
+function mergeVersionLists(lists: string[][]): string[] {
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    for (const list of lists) {
+        for (const v of list) {
+            const key = v.toLowerCase();
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(v);
+            }
+        }
+    }
+    return merged;
+}
+
 function mergeFlagInto(map: Map<string, VersionFlags>, version: string, flag: VersionFlags): void {
     const existing = map.get(version);
     const seenUrls = new Set(existing?.vulnerabilities.map(v => v.url) ?? []);
@@ -166,7 +181,7 @@ export function formatUpgradeSummary(packageId: string, info: PackageVersionInfo
 
 export function outputPackageSummary(outputChannel: vscode.OutputChannel, packages: PackageReference[], infos: Map<string, PackageVersionInfo>): void {
     for (const pkg of packages) {
-        const info = infos.get(pkg.packageId.toLowerCase());
+        const info = infos.get(packageKey(pkg));
         if (info) {
             outputChannel.appendLine(`[NuGet Lens]   ${formatUpgradeSummary(pkg.packageId, info)}`);
         } else {
