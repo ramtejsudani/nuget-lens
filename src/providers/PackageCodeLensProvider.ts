@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PackageScanner } from '../Services/packagescanner';
-import { UpgradeService } from '../Services/UpgradeService';
+import { UpgradeService, packageKey } from '../Services/UpgradeService';
 import { VersionFlags } from '../models/VersionFlags';
 import { highestSeverity, vulnerabilitySeverityLabel } from '../models/VulnerabilityInfo';
 
@@ -65,7 +65,7 @@ export class PackageCodeLensProvider implements vscode.CodeLensProvider {
             if (pkg.lineNumber === undefined || pkg.lineNumber >= document.lineCount) {
                 continue;
             }
-            const info = infos.get(pkg.packageId.toLowerCase());
+            const info = infos.get(packageKey(pkg));
             if (!info) {
                 continue;
             }

@@ -17,23 +17,96 @@ export function isAzureArtifactsUrl(url: string): boolean {
     return AZURE_ARTIFACTS_HOST.test(url);
 }
 
+const RESTORE_SOURCE_PROPERTIES = ['RestoreAdditionalProjectSources', 'RestoreSources'];
+
+export function extractMsBuildRestoreSources(xmlContent: string): string[] {
+    const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' });
+    const parsed = parser.parse(xmlContent);
+    const groups = parsed?.Project?.PropertyGroup;
+    if (!groups) {
+        return [];
+    }
+
+    const urls: string[] = [];
+    for (const group of Array.isArray(groups) ? groups : [groups]) {
+        for (const prop of RESTORE_SOURCE_PROPERTIES) {
+            const values = group?.[prop];
+            if (values === undefined) {
+                continue;
+            }
+            for (const value of Array.isArray(values) ? values : [values]) {
+                const text = typeof value === 'object' && value !== null ? value['#text'] : value;
+                if (typeof text !== 'string') {
+                    continue;
+                }
+                for (const part of text.split(';')) {
+                    const url = part.trim();
+                    // Skip MSBuild property references like $(RestoreSources); only literal feeds are usable.
+                    if (/^https?:\/\//i.test(url) && !url.includes('$(')) {
+                        urls.push(url);
+                    }
+                }
+            }
+        }
+    }
+    return urls;
+}
+
+function dedupeByUrl(sources: NuGetSource[]): NuGetSource[] {
+    const seen = new Set<string>();
+    return sources.filter(s => {
+        const key = s.url.replace(/\/+$/, '').toLowerCase();
+        if (seen.has(key)) {
+            return false;
+        }
+        seen.add(key);
+        return true;
+    });
+}
+
 export class NuGetConfigParser {
 
     public resolveSources(fromFilePath: string): NuGetSource[] {
-        const configPath = this.findNuGetConfig(path.dirname(fromFilePath));
-        if (!configPath) {
-            return [DEFAULT_SOURCE];
-        }
+        const startDir = path.dirname(fromFilePath);
+        const configPath = this.findUp(startDir, 'nuget.config');
+        const configSources = configPath ? this.parseSources(configPath) : [];
+        const baseSources = configSources.length > 0 ? configSources : [DEFAULT_SOURCE];
 
-        const sources = this.parseSources(configPath);
-        return sources.length > 0 ? sources : [DEFAULT_SOURCE];
+        return dedupeByUrl([...baseSources, ...this.resolveMsBuildSources(startDir)]);
     }
 
-    private findNuGetConfig(startDir: string): string | undefined {
+    // Feeds can also be added from MSBuild via RestoreAdditionalProjectSources / RestoreSources in
+    // Directory.Packages.props or Directory.Build.props (often inside a Condition, e.g. a develop
+    // channel). Conditions aren't evaluated: every literal feed URL found is consulted, since the
+    // extension wants to see every version a line could be upgraded to.
+    private resolveMsBuildSources(startDir: string): NuGetSource[] {
+        const sources: NuGetSource[] = [];
+        for (const fileName of ['directory.packages.props', 'directory.build.props']) {
+            const filePath = this.findUp(startDir, fileName);
+            if (!filePath) {
+                continue;
+            }
+            try {
+                const urls = extractMsBuildRestoreSources(fs.readFileSync(filePath, 'utf8'));
+                for (const url of urls) {
+                    sources.push({
+                        name: `${path.basename(filePath)} (${url})`,
+                        url,
+                        isAzureArtifacts: isAzureArtifactsUrl(url)
+                    });
+                }
+            } catch {
+                // unreadable/malformed props file: fall back to nuget.config sources only
+            }
+        }
+        return sources;
+    }
+
+    private findUp(startDir: string, lowerCaseFileName: string): string | undefined {
         let dir = startDir;
         while (true) {
             const entries = this.tryReadDir(dir);
-            const match = entries.find(e => e.toLowerCase() === 'nuget.config');
+            const match = entries.find(e => e.toLowerCase() === lowerCaseFileName);
             if (match) {
                 return path.join(dir, match);
             }
