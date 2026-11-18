@@ -2,7 +2,7 @@
   "name": "nuget-lens",
   "displayName": "NuGet Lens",
   "description": "Extension to upgrade nuget packages from directory.packages.props, csproj or packages.config. ",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "RamtejDevLabs",
   "author": {
     "name": "Ramtej Sudani"
