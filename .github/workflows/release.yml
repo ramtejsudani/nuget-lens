@@ -5,6 +5,9 @@ on:
     branches: [master]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,7 +26,8 @@ jobs:
         run: npm ci
 
       - name: Bump version
-        run: npm version patch --no-git-tag-version
+        id: bump
+        run: echo "version=$(npm version patch --no-git-tag-version)" >> "$GITHUB_OUTPUT"
 
       - name: Package VSIX
         run: npx @vscode/vsce package
@@ -33,3 +37,14 @@ jobs:
         with:
           name: nuget-lens
           path: '*.vsix'
+
+      # Only on merges to master, not on PR builds
+      - name: Commit version bump and tag
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
+          git tag ${{ steps.bump.outputs.version }}
+          git push origin HEAD:master --follow-tags
